@@ -61,11 +61,9 @@ let l=new THREE.Mesh(new THREE.BoxGeometry(.08,.04,2),new THREE.MeshBasicMateria
 l.position.set(-2.65,.05,-i*4);
 scene.add(l);
 
-```
 let r=l.clone();
 r.position.x=2.65;
 scene.add(r);
-```
 
 }
 
