@@ -1,113 +1,95 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Neon Runner</title>
+<title>Neon Runner Advanced</title>
 <style>
-body{
-margin:0;
-background:#111;
-overflow:hidden;
-font-family:Arial;
-}
-#player{
-width:50px;
-height:50px;
-background:cyan;
-position:absolute;
-bottom:20px;
-left:50px;
-}
-.obstacle{
-width:40px;
-height:40px;
-background:red;
-position:absolute;
-bottom:20px;
-right:-40px;
-}
-#score{
-position:absolute;
-top:10px;
-left:10px;
-color:white;
-font-size:24px;
-}
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#050015;font-family:Arial;color:white}
+canvas{display:block;width:100vw;height:100vh;background:linear-gradient(#07001d,#16002e)}
+#ui{position:fixed;top:15px;left:15px;font-size:22px;z-index:2}
+#help{position:fixed;bottom:15px;left:15px;color:#aaa;z-index:2}
 </style>
 </head>
 <body>
-
-<div id="score">0</div>
-<div id="player"></div>
+<div id="ui">Score: <span id="score">0</span> | High: <span id="high">0</span> | Coins: <span id="coins">0</span></div>
+<div id="help">SPACE / Click / Tap = Jump | R = Restart</div>
+<canvas id="game"></canvas>
 
 <script>
-let player=document.getElementById("player");
-let score=document.getElementById("score");
+const c=document.getElementById("game"),ctx=c.getContext("2d");
+const scoreEl=document.getElementById("score"),highEl=document.getElementById("high"),coinsEl=document.getElementById("coins");
+function resize(){c.width=innerWidth;c.height=innerHeight} resize(); addEventListener("resize",resize);
 
-let jumping=false;
-let points=0;
+let high=localStorage.getItem("neonHigh")||0; highEl.textContent=high;
+let player,obs,coins,score,coinCount,speed,ground,over,stars;
 
-document.addEventListener("keydown",jump);
-document.addEventListener("click",jump);
+function reset(){
+ ground=c.height-80; score=0; coinCount=0; speed=7; over=false;
+ player={x:110,y:ground-60,w:45,h:60,vy:0,jump:false};
+ obs=[]; coins=[];
+ stars=Array.from({length:80},()=>({x:Math.random()*c.width,y:Math.random()*c.height,s:Math.random()*2}));
+ scoreEl.textContent=0; coinsEl.textContent=0;
+}
+reset();
 
 function jump(){
-if(jumping) return;
-jumping=true;
-
-let pos=20;
-
-let up=setInterval(()=>{
-if(pos>=180){
-clearInterval(up);
-
-let down=setInterval(()=>{
-if(pos<=20){
-clearInterval(down);
-jumping=false;
-}else{
-pos-=5;
-player.style.bottom=pos+"px";
+ if(over){reset();return}
+ if(!player.jump){player.vy=-18;player.jump=true}
 }
-},20);
+addEventListener("keydown",e=>{if(e.code==="Space")jump(); if(e.key==="r"||e.key==="R")reset()});
+addEventListener("click",jump);
+addEventListener("touchstart",jump);
 
-}else{
-pos+=5;
-player.style.bottom=pos+"px";
-}
-},20);
+function rect(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+
+function drawCity(){
+ ctx.fillStyle="#080012";
+ for(let i=0;i<12;i++){
+  let w=70,h=80+(i*37)%180,x=(i*130-(score*0.7)%130)-60;
+  ctx.fillRect(x,c.height-80-h,w,h);
+  ctx.fillStyle="#00ffd544";
+  for(let y=c.height-80-h+15;y<c.height-95;y+=28)ctx.fillRect(x+15,y,10,10);
+  ctx.fillStyle="#080012";
+ }
 }
 
-function createObstacle(){
+function loop(){
+ ctx.clearRect(0,0,c.width,c.height);
 
-let obs=document.createElement("div");
-obs.classList.add("obstacle");
-document.body.appendChild(obs);
+ stars.forEach(st=>{st.x-=speed*.15;if(st.x<0)st.x=c.width;ctx.fillStyle="#ffffff88";ctx.fillRect(st.x,st.y,st.s,st.s)});
+ drawCity();
 
-let x=window.innerWidth;
+ ground=c.height-80;
+ ctx.strokeStyle="#00ffd5";ctx.lineWidth=4;ctx.shadowBlur=20;ctx.shadowColor="#00ffd5";
+ ctx.beginPath();ctx.moveTo(0,ground);ctx.lineTo(c.width,ground);ctx.stroke();ctx.shadowBlur=0;
 
-let move=setInterval(()=>{
+ player.vy+=0.9; player.y+=player.vy;
+ if(player.y>=ground-player.h){player.y=ground-player.h;player.vy=0;player.jump=false}
 
-x-=6;
-obs.style.left=x+"px";
+ ctx.fillStyle="#00ffd5";ctx.shadowBlur=25;ctx.shadowColor="#00ffd5";
+ ctx.fillRect(player.x,player.y,player.w,player.h);
+ ctx.shadowBlur=0;
 
-let playerBottom=parseInt(player.style.bottom)||20;
+ if(Math.random()<0.018)obs.push({x:c.width+50,y:ground-50,w:35+Math.random()*25,h:50});
+ if(Math.random()<0.012)coins.push({x:c.width+40,y:ground-140-Math.random()*90,w:22,h:22});
 
-if(x<100 && x>40 && playerBottom<60){
-alert("Game Over! Score: "+points);
-location.reload();
+ obs.forEach(o=>{o.x-=speed;ctx.fillStyle="#ff2bd6";ctx.shadowBlur=20;ctx.shadowColor="#ff2bd6";ctx.fillRect(o.x,o.y,o.w,o.h);ctx.shadowBlur=0;if(rect(player,o))over=true});
+ coins.forEach(co=>{co.x-=speed;ctx.beginPath();ctx.fillStyle="#ffd500";ctx.shadowBlur=20;ctx.shadowColor="#ffd500";ctx.arc(co.x,co.y,co.w/2,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;if(rect(player,{x:co.x-11,y:co.y-11,w:22,h:22})){co.got=true;coinCount++;coinsEl.textContent=coinCount}});
+ obs=obs.filter(o=>o.x>-100); coins=coins.filter(co=>co.x>-50&&!co.got);
+
+ score++; speed+=0.002;
+ scoreEl.textContent=Math.floor(score/5);
+
+ if(over){
+  let final=Math.floor(score/5);
+  if(final>high){high=final;localStorage.setItem("neonHigh",high);highEl.textContent=high}
+  ctx.fillStyle="#ffffff";ctx.font="55px Arial";ctx.fillText("GAME OVER",c.width/2-170,c.height/2-30);
+  ctx.font="24px Arial";ctx.fillText("Click / Tap to Restart",c.width/2-110,c.height/2+20);
+  return;
+ }
+ requestAnimationFrame(loop);
 }
-
-if(x<0){
-obs.remove();
-clearInterval(move);
-points++;
-score.innerText=points;
-}
-
-},20);
-}
-
-setInterval(createObstacle,2000);
+loop();
 </script>
-
 </body>
 </html>
