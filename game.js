@@ -3,7 +3,7 @@ let lane=0,targetX=0,vy=0,jumping=false;
 let obstacles=[],coins=[],buildings=[];
 let score=0,totalCoins=Number(localStorage.getItem("coins")||0);
 let high=Number(localStorage.getItem("high")||0);
-let speed=.34,running=false;
+let speed=.55,running=false;
 
 const scoreEl=document.getElementById("score");
 const coinsEl=document.getElementById("coins");
@@ -20,7 +20,8 @@ scene=new THREE.Scene();
 scene.background=new THREE.Color(0x03000d);
 
 camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,1000);
-camera.position.set(0,5.2,9);
+camera.position.set(0,4,7);
+
 camera.lookAt(0,1,-5);
 
 renderer=new THREE.WebGLRenderer({antialias:true});
