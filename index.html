@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Neon Runner</title>
+<style>
+body{
+margin:0;
+background:#111;
+overflow:hidden;
+font-family:Arial;
+}
+#player{
+width:50px;
+height:50px;
+background:cyan;
+position:absolute;
+bottom:20px;
+left:50px;
+}
+.obstacle{
+width:40px;
+height:40px;
+background:red;
+position:absolute;
+bottom:20px;
+right:-40px;
+}
+#score{
+position:absolute;
+top:10px;
+left:10px;
+color:white;
+font-size:24px;
+}
+</style>
+</head>
+<body>
+
+<div id="score">0</div>
+<div id="player"></div>
+
+<script>
+let player=document.getElementById("player");
+let score=document.getElementById("score");
+
+let jumping=false;
+let points=0;
+
+document.addEventListener("keydown",jump);
+document.addEventListener("click",jump);
+
+function jump(){
+if(jumping) return;
+jumping=true;
+
+let pos=20;
+
+let up=setInterval(()=>{
+if(pos>=180){
+clearInterval(up);
+
+let down=setInterval(()=>{
+if(pos<=20){
+clearInterval(down);
+jumping=false;
+}else{
+pos-=5;
+player.style.bottom=pos+"px";
+}
+},20);
+
+}else{
+pos+=5;
+player.style.bottom=pos+"px";
+}
+},20);
+}
+
+function createObstacle(){
+
+let obs=document.createElement("div");
+obs.classList.add("obstacle");
+document.body.appendChild(obs);
+
+let x=window.innerWidth;
+
+let move=setInterval(()=>{
+
+x-=6;
+obs.style.left=x+"px";
+
+let playerBottom=parseInt(player.style.bottom)||20;
+
+if(x<100 && x>40 && playerBottom<60){
+alert("Game Over! Score: "+points);
+location.reload();
+}
+
+if(x<0){
+obs.remove();
+clearInterval(move);
+points++;
+score.innerText=points;
+}
+
+},20);
+}
+
+setInterval(createObstacle,2000);
+</script>
+
+</body>
+</html>
