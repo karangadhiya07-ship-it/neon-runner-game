@@ -168,7 +168,6 @@ score+=.12;
 speed+=.0002;
 scoreEl.innerText=Math.floor(score);
 
-```
 player.position.x+=(targetX-player.position.x)*.22;
 vy-=.035;
 player.position.y+=vy;
@@ -207,7 +206,6 @@ coins=coins.filter(c=>c.position.z<10&&!c.collected);
 
 camera.position.x+=(player.position.x*.35-camera.position.x)*.08;
 camera.lookAt(player.position.x,1,-5);
-```
 
 }
 
